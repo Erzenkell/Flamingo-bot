@@ -1,5 +1,7 @@
 const Discord = require('discord.js');
 
+const { joinVoiceChannel } = require('@discordjs/voice');
+
 const {
     prefix,
 	token,
@@ -41,9 +43,9 @@ const queue = new Map();
 async function playFlamingo(message, serverQueue) {  
 
     console.log("flamingo");
-    console.log(message.member.voice.channel);
 
     const voiceChannel = message.member.voice.channel;
+    console.log(voiceChannel);
 
     if(!voiceChannel){
         return message.channel.send("Connecte toi dans un channel vocal avant mongolo");
@@ -71,12 +73,17 @@ async function playFlamingo(message, serverQueue) {
         queue.set(message.guild.id, queueConstruct);
         queueConstruct.songs.push(song);
 
+        const connection = joinVoiceChannel({
+            channelId: voiceChannel.id,
+            guildId: voiceChannel.guild.id,
+            adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+        });
+    
         try {
-            var connection = await voiceChannel.join();
+            await entersState(connection, VoiceConnectionStatus.Ready, 30e3);
             queueConstruct.connection = connection;
             play(message.guild, queueConstruct.songs[0]);
-        }
-        catch (error) {
+        } catch (error) {
             console.log(error);
             queue.delete(message.guild.id);
             return message.channel.send(error);
